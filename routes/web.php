@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/')
+    ->name('home')
+    ->uses([App\Http\Controllers\ESIOAuthController::class, 'ssoRedirect']);
+
+Route::get('/auth/callback')
+    ->name('auth.callback')
+    ->uses([App\Http\Controllers\ESIOAuthController::class, 'oauthCallback']);
+
+Route::get('/app')
+    ->name('app')
+    ->middleware('auth')
+    ->uses([App\Http\Controllers\AppController::class, 'index']);

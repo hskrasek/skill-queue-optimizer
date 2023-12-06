@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'eveonline' => [
+        'client_id' => env('EVEONLINE_CLIENT_ID'),
+        'client_secret' => env('EVEONLINE_CLIENT_SECRET'),
+        'redirect' => env('EVEONLINE_REDIRECT_URI'),
+        'scopes' => env('EVEONLINE_SCOPES'),
+    ],
 ];

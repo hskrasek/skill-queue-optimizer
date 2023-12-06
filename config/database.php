@@ -93,6 +93,13 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'sde' => [
+            'driver' => 'sqlite',
+            'url' => env('DATABASE_URL'),
+            'database' => database_path('sde.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => false,
+        ],
     ],
 
     /*
