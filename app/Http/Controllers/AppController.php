@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\ESI\Attributes;
 use App\ESI\Http\Middleware;
 use App\ESI\Implant;
 use App\ESI\Skill;
@@ -143,11 +144,10 @@ class AppController extends Controller
                 ->map(fn(Type $type) => Implant::make($type)),
             $optimal,
         );
+        
+        $attributes = Attributes::make($responses['attributes']->json());
 
-        // TODO: Map this into an Attributes model. Use this to also show remap information
-        $attributes = Collection::make($responses['attributes']->json())
-            ->only(['intelligence', 'memory', 'charisma', 'perception', 'willpower']);
-
+        //TODO: Update to use Attributes object
         $currentSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($attributes->all()))
             ->sum();
         $optimalSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($optimal))
