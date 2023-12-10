@@ -116,7 +116,7 @@
                             </div>
                         </div>
 {{--                        <span class="text-base font-bold">Finishes In: </span><p class="text-base font-semibold leading-7 text-indigo-600">{{ $finishedTime }}</p>--}}
-                    </div>g
+                    </div>
                     <div class="basis-1/2">
                         <h3 class="text-xl font-bold tracking-tight text-gray-900">Optimal</h3>
                         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

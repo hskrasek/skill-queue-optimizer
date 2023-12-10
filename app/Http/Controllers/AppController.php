@@ -133,16 +133,16 @@ class AppController extends Controller
             }
         }
 
-//        $optimal = $this->adjustOptimalBasedOnCharacter(
-//            Type::with(['group', 'attributes',])
-//                ->whereIn(
-//                    'typeID',
-//                    $responses['implants']->json()
-//                )
-//                ->get()
-//                ->map(fn(Type $type) => Implant::make($type)),
-//            $optimal,
-//        );
+        $optimal = $this->adjustOptimalBasedOnCharacter(
+            Type::with(['group', 'attributes',])
+                ->whereIn(
+                    'typeID',
+                    $responses['implants']->json()
+                )
+                ->get()
+                ->map(fn(Type $type) => Implant::make($type)),
+            $optimal,
+        );
 
         // TODO: Map this into an Attributes model. Use this to also show remap information
         $attributes = Collection::make($responses['attributes']->json())

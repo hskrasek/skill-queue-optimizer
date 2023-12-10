@@ -1,16 +1,16 @@
-# fly.toml app configuration file generated for skill-queue-optimizer on 2023-12-04T21:41:19-06:00
+# fly.toml app configuration file generated for skill-queue-optimizer-morning-dream-6215-wispy-leaf-5628-wandering-night-3840 on 2023-12-10T00:26:31-06:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "skill-queue-optimizer"
+app = "skill-queue-optimizer-morning-dream-6215-wispy-leaf-5628-wandering-night-3840"
 primary_region = "dfw"
 console_command = "php /var/www/html/artisan tinker"
 
 [build]
   [build.args]
     NODE_VERSION = "18"
-    PHP_VERSION = "8.2"
+    PHP_VERSION = "8.3"
 
 [env]
   APP_ENV = "production"
