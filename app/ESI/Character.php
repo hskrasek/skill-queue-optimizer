@@ -18,10 +18,12 @@ final readonly class Character
         public string $description,
         public string $gender,
         public CarbonInterface $birthday,
+        public Portrait $portrait,
         public float $securityStatus,
         public Attributes $attributes,
         public Collection $implants,
     ) {
         $this->age = $this->birthday->diffInYears();
+        $this->implants->sortBy('slot');
     }
 }
