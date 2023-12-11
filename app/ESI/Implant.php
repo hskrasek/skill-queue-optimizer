@@ -14,6 +14,7 @@ final readonly class Implant
         public string $name,
         public string $attribute,
         public int $value,
+        public int $slot,
     ) {}
 
     public static function make(Type $type): self
@@ -25,6 +26,9 @@ final readonly class Implant
             })?->attribute->attributeName)->explode(' ')->first(),
             value: (int)$type->attributes->first(function (TypeAttribute $typeAttribute): bool {
                 return in_array($typeAttribute->attributeID, [175, 176, 177, 178, 179], true) && $typeAttribute->valueFloat > 0;
+            })?->valueFloat,
+            slot: (int)$type->attributes->first(function (TypeAttribute $typeAttribute): bool {
+                return $typeAttribute->attributeID === 331;
             })?->valueFloat,
         );
     }
