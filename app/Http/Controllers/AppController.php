@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\ESI\Attributes;
-use App\ESI\Http\Middleware;
-use App\ESI\Implant;
-use App\ESI\Skill;
+use App\Models\Bloodline;
+use App\Models\Race;
+use App\ESI\{Attributes, Character, Http\Middleware, Implant, Portrait, Skill};
 use App\Models\Type;
-use Carbon\CarbonInterval;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -27,6 +26,14 @@ class AppController extends Controller
                 ])
                 ->withMiddleware(Middleware::refreshToken(auth()->user()->esi_token, auth()->user()->esi_refresh_token))
                 ->get('characters/' . auth()->user()->character_id),
+            $pool->as('portrait')
+                ->baseUrl('https://esi.evetech.net/latest/')
+                ->withHeaders([
+                    'User-Agent' => 'Eve-Online-CLI-App',
+                    'Authorization' => 'Bearer ' . auth()->user()->esi_token,
+                ])
+                ->withMiddleware(Middleware::refreshToken(auth()->user()->esi_token, auth()->user()->esi_refresh_token))
+                ->get('characters/' . auth()->user()->character_id . '/portrait/'),
             $pool->as('attributes')
                 ->baseUrl('https://esi.evetech.net/latest/')
                 ->withHeaders([
@@ -53,7 +60,32 @@ class AppController extends Controller
                 ->get('characters/' . auth()->user()->character_id . '/skillqueue'),
         ]);
 
-        /** @var Collection<string, Skill> $skills */
+        $character = $responses['character']->json();
+
+        $character = new Character(
+            name: $character['name'],
+            description: $character['description'] ?? '',
+            gender: $character['gender'],
+            race: Race::find($character['race_id']),
+            bloodline: Bloodline::find($character['bloodline_id']),
+            birthday: CarbonImmutable::parse($character['birthday']),
+            portrait: new Portrait(
+                x64: $responses['portrait']->json()['px64x64'],
+                x128: $responses['portrait']->json()['px128x128'],
+                x256: $responses['portrait']->json()['px256x256'],
+                x512: $responses['portrait']->json()['px512x512'],
+            ),
+            securityStatus: $character['security_status'],
+            attributes: Attributes::make($responses['attributes']->json()),
+            implants: Type::with(['group', 'attributes',])
+                ->whereIn(
+                    'typeID',
+                    $responses['implants']->json()
+                )
+                ->get()
+                ->map(fn(Type $type) => Implant::make($type))
+        );
+
         $skillQueue = Type::with(['group', 'attributes',])
             ->whereIn('typeID', Arr::pluck($responses['queue']->json(), 'skill_id'))
             ->get()
@@ -135,39 +167,36 @@ class AppController extends Controller
         }
 
         $optimal = $this->adjustOptimalBasedOnCharacter(
-            Type::with(['group', 'attributes',])
-                ->whereIn(
-                    'typeID',
-                    $responses['implants']->json()
-                )
-                ->get()
-                ->map(fn(Type $type) => Implant::make($type)),
+            $character->implants,
             $optimal,
         );
-        
-        $attributes = Attributes::make($responses['attributes']->json());
 
         //TODO: Update to use Attributes object
-        $currentSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($attributes->all()))
-            ->sum();
-        $optimalSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($optimal))
-            ->sum();
+//        $currentSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($attributes->all()))
+//            ->sum();
+//        $optimalSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($optimal))
+//            ->sum();
+//
+//        $savedTime = CarbonInterval::seconds(
+//            $optimalSkillTime - $currentSkillTime
+//        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
+//
+//        $finishedTime = CarbonInterval::seconds(
+//            $currentSkillTime
+//        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
+//
+//        $optimalFinishTime = CarbonInterval::seconds(
+//            $optimalSkillTime
+//        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
 
-        $savedTime = CarbonInterval::seconds(
-            $optimalSkillTime - $currentSkillTime
-        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
-
-        $finishedTime = CarbonInterval::seconds(
-            $currentSkillTime
-        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
-
-        $optimalFinishTime = CarbonInterval::seconds(
-            $optimalSkillTime
-        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
-
-        // $responses['character']->json() TODO: Map this into a Character model
-
-        return view('app', compact('skillQueue', 'attributes', 'optimal', 'savedTime', 'finishedTime', 'optimalFinishTime'));
+        return view(
+            view: 'app',
+            data: [
+                'character' => $character,
+                'skillQueue' => $skillQueue,
+                'optimal' => $optimal,
+            ],
+        );
     }
 
     /**
