@@ -13,12 +13,12 @@ ARG PHP_VERSION
 
 LABEL fly_launch_runtime="laravel"
 
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y php${PHP_VERSION}-bz2 \
+    && phpenmod -v ${PHP_VERSION} bz2
+
 # copy application code, skipping files based on .dockerignore
 COPY . /var/www/html
-
-RUN apt-get update -y && apt-get install -y ca-certificates fuse3 sqlite3
-
-COPY --from=flyio/litefs:0.5 /usr/local/bin/litefs /usr/local/bin/litefs
 
 RUN composer install --optimize-autoloader --no-dev \
     && mkdir -p storage/logs \
@@ -94,4 +94,4 @@ RUN rsync -ar /var/www/html/public-npm/ /var/www/html/public/ \
 
 EXPOSE 8080
 
-ENTRYPOINT ["/entrypoint", "litefs", "mount"]
+ENTRYPOINT ["/entrypoint"]

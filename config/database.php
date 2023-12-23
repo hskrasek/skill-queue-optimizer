@@ -96,7 +96,7 @@ return [
         'sde' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
-            'database' => database_path('sde.sqlite'),
+            'database' => storage_path('database/sde.sqlite'),
             'prefix' => '',
             'foreign_key_constraints' => false,
         ],

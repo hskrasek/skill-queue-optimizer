@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for skill-queue-optimizer-morning-dream-6215-wispy-leaf-5628-wandering-night-3840 on 2023-12-10T00:26:31-06:00
+# fly.toml app configuration file generated for skill-queue-optimizer on 2023-12-20T00:24:48-06:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "skill-queue-optimizer-morning-dream-6215-wispy-leaf-5628-wandering-night-3840"
+app = "skill-queue-optimizer"
 primary_region = "dfw"
 console_command = "php /var/www/html/artisan tinker"
 
@@ -14,11 +14,18 @@ console_command = "php /var/www/html/artisan tinker"
 
 [env]
   APP_ENV = "production"
+  DB_CONNECTION = "sqlite"
+  DB_DATABASE = "/var/www/html/storage/database/database.sqlite"
   LOG_CHANNEL = "stderr"
   LOG_LEVEL = "info"
   LOG_STDERR_FORMATTER = "Monolog\\Formatter\\JsonFormatter"
   SESSION_DRIVER = "cookie"
   SESSION_SECURE_COOKIE = "true"
+
+[[mounts]]
+  source = "storage_vol"
+  destination = "/var/www/html/storage"
+  auto_extend_size_threshold = 0
 
 [http_service]
   internal_port = 8080

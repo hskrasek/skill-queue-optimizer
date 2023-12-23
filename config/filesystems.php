@@ -56,6 +56,11 @@ return [
             'throw' => false,
         ],
 
+        'database' => [
+            'driver' => 'local',
+            'root' => storage_path('database'),
+            'throw' => false,
+        ],
     ],
 
     /*

@@ -35,6 +35,12 @@ return [
         'client_id' => env('EVEONLINE_CLIENT_ID'),
         'client_secret' => env('EVEONLINE_CLIENT_SECRET'),
         'redirect' => env('EVEONLINE_REDIRECT_URI'),
-        'scopes' => env('EVEONLINE_SCOPES'),
+        'scopes' => implode(' ', [
+            'publicData',
+            'esi-clones.read_implants.v1',
+            'esi-skills.read_skills.v1',
+            'esi-skills.read_skillqueue.v1',
+            'esi-characterstats.read.v1',
+        ]),
     ],
 ];
