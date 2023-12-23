@@ -24,7 +24,9 @@ class Handler extends ExceptionHandler
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
-            //
+            if ($this->container->bound('sentry')) {
+                $this->container->make('sentry')->captureException($e);
+            }
         });
     }
 }

@@ -14,8 +14,10 @@ ARG PHP_VERSION
 LABEL fly_launch_runtime="laravel"
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y php${PHP_VERSION}-bz2 \
-    && phpenmod -v ${PHP_VERSION} bz2
+    && apt-get install --no-install-recommends -y php${PHP_VERSION}-bz2 php${PHP_VERSION}-dev php-pear \
+      g++ make \
+    && pecl install excimer \
+    && phpenmod -v ${PHP_VERSION} bz2 excimer
 
 # copy application code, skipping files based on .dockerignore
 COPY . /var/www/html

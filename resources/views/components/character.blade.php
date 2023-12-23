@@ -3,7 +3,7 @@
     /** @var \App\ESI\Character $character */
 @endphp
 <div class="flex flex-wrap break-words px-2 py-4 leading-6 text-neutral-800">
-    <div class="mt-0 w-full max-w-full flex-none break-words px-3 leading-6 text-neutral-800 lg:w-7/12 lg:flex-none">
+    <div class="mt-0 w-full max-w-full flex-none break-words px-3 leading-6 text-neutral-800">
         <div class="float-left mb-2 mr-4 text-neutral-800">
             <img src="{{ $character->portrait->x512 }}"
                  alt="Player portrait for the Eve Online character {{ $character->name }}"
