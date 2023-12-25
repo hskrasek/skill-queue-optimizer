@@ -15,5 +15,30 @@
 </head>
 <body class="antialiased">
     {{ $slot }}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('optimal', () => ({
+                Charisma: '??',
+                Intelligence: '??',
+                Memory: '??',
+                Perception: '??',
+                Willpower: '??',
+
+                optimize()  {
+                    axios.post('/optimize')
+                        .then(response => {
+                            this.Charisma = response.data.Charisma;
+                            this.Intelligence = response.data.Intelligence;
+                            this.Memory = response.data.Memory;
+                            this.Perception = response.data.Perception;
+                            this.Willpower = response.data.Willpower;
+                        })
+                        .catch(error => {
+                            console.log(error);
+                        });
+                }
+            }))
+        });
+    </script>
 </body>
 </html>

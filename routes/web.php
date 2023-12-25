@@ -25,3 +25,8 @@ Route::get('/app')
     ->name('app')
     ->middleware('auth')
     ->uses([App\Http\Controllers\AppController::class, 'index']);
+
+Route::post('/optimize')
+    ->name('optimize')
+    ->middleware('auth')
+    ->uses([App\Http\Controllers\AppController::class, 'optimize']);

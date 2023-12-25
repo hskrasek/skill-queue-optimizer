@@ -5,13 +5,13 @@
 @endphp
 <x-layout>
     <div
-        class="relative sm:flex sm:justify-center sm:items-center min-h-screen bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white">
+        class="relative sm:flex sm:justify-center sm:items-center min-h-screen bg-dots-darker bg-center bg-eve-light dark:bg-dots-lighter dark:bg-eve-dark selection:bg-eve-accent selection:text-white">
         <div class="bg-white px-6 py-32 lg:px-8">
             <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
-                <p class="text-base font-semibold leading-7 text-indigo-600">Eve Online</p>
-                <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Skill Queue Optimizer</h1>
+                <p class="text-base font-semibold leading-7 text-eve-accent">Eve Online</p>
+                <h1 class="mt-2 text-3xl font-bold tracking-tight text-eve-dark sm:text-4xl">{{ $character->name }}</h1>
                 <div class="divide-y divide-gray-200">
-                    <x-character :character="$character"/>
+                    <x-character :character="$character" />
                     <div class="mt-8 flow-root">
                         <div class="-mx-4 -my-2 sm:-mx-6 lg:-mx-8">
                             <div class="inline-block min-w-full py-2 align-middle">
