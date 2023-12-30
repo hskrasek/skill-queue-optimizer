@@ -7,8 +7,9 @@ namespace App\ESI;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
+use Livewire\Wireable;
 
-final readonly class Attributes
+final readonly class Attributes implements Wireable
 {
     /**
      * @var \WeakMap<Attribute, int>
@@ -48,5 +49,32 @@ final readonly class Attributes
         foreach ($this->attributes as $attribute => $value) {
             yield $attribute => $value;
         }
+    }
+
+    #[\Override]
+    public function toLivewire(): array
+    {
+        $attributes = [];
+
+        foreach ($this->values() as $attribute => $value) {
+            $attributes[$attribute->value] = $value;
+        }
+
+        return $attributes + [
+            'cooldownDate' => $this->cooldownDate,
+            'lastRemapDate' => $this->lastRemapDate,
+            'bonusRemaps' => $this->bonusRemaps,
+        ];
+    }
+
+    #[\Override]
+    public static function fromLivewire($value): Attributes
+    {
+        return new self(
+            Arr::only($value, Attribute::values()),
+            cooldownDate: CarbonImmutable::parse($value['cooldownDate'] ?? null),
+            lastRemapDate: CarbonImmutable::parse($value['lastRemapDate'] ?? null),
+            bonusRemaps: $value['bonusRemaps'] ?? 0,
+        );
     }
 }
