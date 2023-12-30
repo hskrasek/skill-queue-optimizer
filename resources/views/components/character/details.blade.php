@@ -2,10 +2,6 @@
 @php
     /** @var \App\ESI\Character $character */
 @endphp
-{{--<div class="px-4 sm:px-0">--}}
-{{--    <h3 class="text-large font-semibold leading-7 text-gray-900">{{ $character->name }}</h3>--}}
-{{--</div>--}}
-
 <dl class="grid grid-cols-1 sm:grid-cols-2">
     <div class="px-4 py-1 sm:col-span-1 sm:px-0">
         <dt class="text-sm font-medium leading-6 text-gray-900">Race</dt>

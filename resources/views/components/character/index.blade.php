@@ -13,11 +13,11 @@
                  alt="Player portrait for the Eve Online character {{ $character->name }}"
                  width="150" height="150" class="rounded-full h-auto max-w-full align-middle">
         </div>
-        <x-character.attributes :character="$character" />
+        <livewire:character.attributes :character="$character" />
 
         <x-character.details :character="$character" />
 
-        <p class="my-4 text-neutral-800">
+        <p class="my-4 text-neutral-800 prose">
             @if(!empty($character->description))
                 {{ $character->description }}
             @else
