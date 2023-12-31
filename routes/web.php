@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/')
     ->name('home')
+    ->uses([App\Http\Controllers\ESIOAuthController::class, 'home']);
+
+Route::get('login')
+    ->name('login')
     ->uses([App\Http\Controllers\ESIOAuthController::class, 'ssoRedirect']);
 
 Route::get('/auth/callback')

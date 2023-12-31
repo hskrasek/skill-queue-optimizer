@@ -6,16 +6,22 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 
 class ESIOAuthController extends Controller
 {
-    public function ssoRedirect(): RedirectResponse
+    public function home(): View|RedirectResponse
     {
         if (Auth::check()) {
             return redirect('/app');
         }
 
+        return view('home');
+    }
+
+    public function ssoRedirect(): RedirectResponse
+    {
         return Socialite::driver('eveonline')
             ->scopes(config('services.eveonline.scopes'))
             ->redirect();
