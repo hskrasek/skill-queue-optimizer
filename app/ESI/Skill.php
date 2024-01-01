@@ -7,8 +7,9 @@ namespace App\ESI;
 use App\Models\Type;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Livewire\Wireable;
 
-final class Skill
+final class Skill implements Wireable
 {
     private function __construct(
         public readonly int $id,
@@ -51,6 +52,18 @@ final class Skill
         );
     }
 
+    public function level(): string
+    {
+        return match ($this->level) {
+            1 => '&square;',
+            2 => '&square;&square;',
+            3 => '&square;&square;&square;',
+            4 => '&square;&square;&square;&square;',
+            5 => '&square;&square;&square;&square;&square;',
+            default => '0',
+        };
+    }
+
     public function finishesIn(): string
     {
         return $this->startDate?->diffForHumans(
@@ -65,20 +78,15 @@ final class Skill
         ) ?? 'Unknown';
     }
 
-    /**
-     * @param array<string, int> $attributes
-     * @return float
-     */
-    public function trainingTime(array $attributes): float
+    public function trainingTime(Attributes $attributes): float
     {
         return (float)(($this->finishSkillPoints - $this->startSkillPoints) /
             $this->skillPointsPerSecond($attributes));
     }
 
-    public function skillPointsPerSecond(array $attributes): float
+    public function skillPointsPerSecond(Attributes $attributes): float
     {
-        return (($attributes[$this->primaryAttribute] ?? $attributes[strtolower($this->primaryAttribute)]) +
-            ($attributes[$this->secondaryAttribute] ?? $attributes[strtolower($this->secondaryAttribute)]) / 2) / 60;
+        return ($attributes[$this->primaryAttribute] + $attributes[$this->secondaryAttribute] / 2) / 60;
     }
 
     public function skillPointsAtLevel(int $level): int
@@ -90,5 +98,41 @@ final class Skill
         $sp = pow(2, 2.5 * $level - 2.5) * 250.0 * $this->rank;
 
         return (int)round($sp);
+    }
+
+    #[\Override]
+    public function toLivewire(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'level' => $this->level,
+            'rank' => $this->rank,
+            'category' => $this->category,
+            'primaryAttribute' => $this->primaryAttribute,
+            'secondaryAttribute' => $this->secondaryAttribute,
+            'startDate' => $this->startDate?->toDateTimeString(),
+            'finishDate' => $this->finishDate?->toDateTimeString(),
+            'startSkillPoints' => $this->startSkillPoints,
+            'finishSkillPoints' => $this->finishSkillPoints,
+        ];
+    }
+
+    #[\Override]
+    public static function fromLivewire($value): Skill
+    {
+        return new self(
+            id: $value['id'],
+            name: $value['name'],
+            level: $value['level'],
+            rank: $value['rank'],
+            category: $value['category'],
+            primaryAttribute: $value['primaryAttribute'],
+            secondaryAttribute: $value['secondaryAttribute'],
+            startDate: $value['startDate'] ? Carbon::parse($value['startDate']) : null,
+            finishDate: $value['finishDate'] ? Carbon::parse($value['finishDate']) : null,
+            startSkillPoints: $value['startSkillPoints'],
+            finishSkillPoints: $value['finishSkillPoints'],
+        );
     }
 }

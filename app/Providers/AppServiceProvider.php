@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\ESI\Attributes;
 use App\ESI\Http\Middleware;
 use App\ESI\Implant;
 use App\ESI\Skill;
 use App\Models\Type;
 use App\Models\User;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
+use Carbon\CarbonInterval;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -29,6 +31,15 @@ class AppServiceProvider extends ServiceProvider
             return $this->mapWithKeys(function ($item, $key) use ($collection) {
                 return [$key => [$item, $collection->get($key)]];
             });
+        });
+
+        Collection::macro('queueTime', function (Attributes $attributes): string {
+            return CarbonInterval::seconds(
+                $this->map(fn(Skill $skill) => $skill->trainingTime($attributes))
+                    ->sum()
+            )->cascade()->forHumans(
+                ['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]
+            );
         });
 
         Http::macro('esi', fn(string $token, string $refreshToken): PendingRequest => Http::withHeaders(

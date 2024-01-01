@@ -9,7 +9,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
 use Livewire\Wireable;
 
-final readonly class Attributes implements Wireable
+final readonly class Attributes implements \ArrayAccess, Wireable
 {
     /**
      * @var \WeakMap<Attribute, int>
@@ -76,5 +76,41 @@ final readonly class Attributes implements Wireable
             lastRemapDate: CarbonImmutable::parse($value['lastRemapDate'] ?? null),
             bonusRemaps: $value['bonusRemaps'] ?? 0,
         );
+    }
+
+    #[\Override]
+    public function offsetExists(mixed $offset): bool
+    {
+        $offset = Attribute::tryFrom(strtolower($offset)) ?? $offset;
+
+        if ($offset instanceof Attribute) {
+            return $this->attributes->offsetExists($offset);
+        }
+
+        return isset($this->{$offset});
+    }
+
+    #[\Override]
+    public function offsetGet(mixed $offset): mixed
+    {
+        $offset = Attribute::tryFrom(strtolower($offset)) ?? $offset;
+
+        if ($offset instanceof Attribute) {
+            return $this->attributes[$offset];
+        }
+
+        return $this->{$offset} ?? null;
+    }
+
+    #[\Override]
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        throw new \BadMethodCallException('Attributes are immutable');
+    }
+
+    #[\Override]
+    public function offsetUnset(mixed $offset): void
+    {
+        throw new \BadMethodCallException('Attributes are immutable');
     }
 }
