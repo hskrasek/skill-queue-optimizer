@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Bloodline;
 use App\Models\Race;
-use App\ESI\{Attributes, Character, Http\Middleware, Implant, Portrait, Skill};
+use App\ESI\{Attributes, Character, Http\Middleware, Implant, Portrait, QueuedSkill, Skill, SkillQueueItem};
 use App\Models\Type;
 use Carbon\CarbonImmutable;
+use CuyZ\Valinor\Mapper\MappingError;
+use CuyZ\Valinor\Mapper\Source\JsonSource;
+use CuyZ\Valinor\Mapper\Source\Source;
+use CuyZ\Valinor\MapperBuilder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -86,104 +90,26 @@ class AppController extends Controller
                 ->map(fn(Type $type) => Implant::make($type))
         );
 
-        $skillQueue = Type::with(['group', 'attributes',])
-            ->whereIn('typeID', Arr::pluck($responses['queue']->json(), 'skill_id'))
-            ->get()
-            ->keyBy('typeID')
-            ->toBase()
-            ->sortBy(fn(Type $type) => array_search($type->typeID, Arr::pluck($responses['queue']->json(), 'skill_id')))
-            ->zipByKey(collect($responses['queue']->json())->keyBy('skill_id'))
-            /** @phpstan-var array{0: Type, 1: array} $type */
-            ->map(fn(array $skillQueue) => Skill::make($skillQueue[0], $skillQueue[1]));
-
-        /** @var array<string, int> $skillPointsByAttributes */
-        $skillPointsByAttributes = $skillQueue->groupBy(
-            fn(Skill $skill) => $skill->primaryAttribute . '|' . $skill->secondaryAttribute
-        )->pipe(
-            fn(Collection $attributeGroup) => $attributeGroup->map(fn(Collection $skills) => $skills->sum(
-                fn(Skill $skill) => $skill->finishSkillPoints - $skill->startSkillPoints
-            ))
-        )->all();
-
-        // TODO: Move this to an object
-        $basePoints = 17;
-        $bonusPoints = 14;
-        $maxPoints = 27;
-        $totalMaxPoints = $basePoints * 5 + $bonusPoints;
-        $minTrainingTime = PHP_FLOAT_MAX;
-        $optimal = [
-            'Charisma' => 0,
-            'Intelligence' => 0,
-            'Memory' => 0,
-            'Perception' => 0,
-            'Willpower' => 0,
-        ];
-
-        for ($intelligence = $basePoints; $intelligence <= $maxPoints; $intelligence++) {
-            for ($memory = $basePoints; $memory <= $maxPoints; $memory++) {
-                for ($perception = $basePoints; $perception <= $maxPoints; $perception++) {
-                    if ($intelligence + $memory + $perception >= $totalMaxPoints - $basePoints * 2) {
-                        break;
-                    }
-
-                    for ($willpower = $basePoints; $willpower <= $maxPoints; $willpower++) {
-                        if ($intelligence + $memory + $perception + $willpower >= $totalMaxPoints - $basePoints) {
-                            break;
-                        }
-
-                        $charisma = $totalMaxPoints - ($intelligence + $memory + $perception + $willpower);
-
-                        if ($charisma > $maxPoints) {
-                            continue;
-                        }
-
-                        $attributes = [
-                            'Intelligence' => $intelligence,
-                            'Memory' => $memory,
-                            'Perception' => $perception,
-                            'Willpower' => $willpower,
-                            'Charisma' => $charisma
-                        ];
-
-                        $trainingTime = array_reduce(
-                            array_keys($skillPointsByAttributes),
-                            function ($t, $key) use ($attributes, $skillPointsByAttributes) {
-                                [$primaryKey, $secondaryKey] = explode('|', $key);
-
-                                $primary = $attributes[$primaryKey];
-                                $secondary = $attributes[$secondaryKey];
-                                return $t + $skillPointsByAttributes[$key] / ($primary + $secondary / 2);
-                            },
-                            0
-                        );
-
-                        if ($trainingTime < $minTrainingTime) {
-                            $minTrainingTime = $trainingTime;
-                            $optimal = $attributes;
-                        }
-                    }
-                }
-            }
+        try {
+            $objects = (new MapperBuilder())
+                ->mapper()
+                ->map(
+                    'array<' . QueuedSkill::class . '>',
+                    Source::array($responses['queue']->json())
+                        ->camelCaseKeys(),
+                );
+        } catch (MappingError $e) {
+            // TODO: Handle this better
+            dd($e);
         }
 
-        $optimal = $this->adjustOptimalBasedOnCharacter(
-            $character->implants,
-            $optimal,
-        );
-
-        //TODO: Update to use Attributes object
-
-//        $optimalSkillTime = $skillQueue->map(fn(Skill $skill) => $skill->trainingTime($optimal))
-//            ->sum();
-//
-//        $savedTime = CarbonInterval::seconds(
-//            $optimalSkillTime - $currentSkillTime
-//        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
-//
-//
-//        $optimalFinishTime = CarbonInterval::seconds(
-//            $optimalSkillTime
-//        )->cascade()->forHumans(['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]);
+        /** @var Collection<int, SkillQueueItem> $skillQueue */
+        $skillQueue = Collection::make($objects)
+            ->map(fn(QueuedSkill $queuedSkill) => new SkillQueueItem(
+                skill: Skill::make(Type::with(['group', 'attributes',])
+                    ->find($queuedSkill->skillId)),
+                queuedSkill: $queuedSkill,
+            ));
 
         return view(
             view: 'app',

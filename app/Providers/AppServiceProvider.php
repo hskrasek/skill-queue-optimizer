@@ -6,6 +6,7 @@ use App\ESI\Attributes;
 use App\ESI\Http\Middleware;
 use App\ESI\Implant;
 use App\ESI\Skill;
+use App\ESI\SkillQueueItem;
 use App\Models\Type;
 use App\Models\User;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
@@ -35,8 +36,8 @@ class AppServiceProvider extends ServiceProvider
 
         Collection::macro('queueTime', function (Attributes $attributes): string {
             return CarbonInterval::seconds(
-                $this->map(fn(Skill $skill) => $skill->trainingTime($attributes))
-                    ->sum()
+                    $this->map(fn(SkillQueueItem $skillQueueItem): CarbonInterval => $skillQueueItem->trainingTime($attributes))
+                        ->sum(fn(CarbonInterval $interval): float => $interval->totalSeconds)
             )->cascade()->forHumans(
                 ['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]
             );

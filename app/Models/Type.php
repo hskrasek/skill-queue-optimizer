@@ -15,6 +15,9 @@ class Type extends Model
 
     protected $table = 'invTypes';
 
+    protected $primaryKey = 'typeID';
+
+
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class, 'groupID', 'groupID');
