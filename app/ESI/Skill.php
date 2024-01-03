@@ -14,90 +14,52 @@ final class Skill implements Wireable
     private function __construct(
         public readonly int $id,
         public readonly string $name,
-        public readonly int $level,
         public readonly float $rank,
         public readonly string $category,
         public readonly string $primaryAttribute,
         public readonly string $secondaryAttribute,
-        public readonly ?Carbon $startDate,
-        public readonly ?Carbon $finishDate,
-        public int $startSkillPoints,
-        public int $finishSkillPoints,
-    ) {
-        $this->finishSkillPoints = $this->skillPointsAtLevel($this->level);
-        $this->startSkillPoints = min(
-            $this->startSkillPoints,
-            $this->skillPointsAtLevel($this->level - 1),
-            $this->finishSkillPoints
-        );
-    }
+    ) {}
 
-    /**
-     * @param array{finish_date: string, finished_level: int, level_end_sp: int, level_start_sp: int, queue_position: int, skill_id: int, start_date: string, training_start_sp: int} $queue
-     */
-    public static function make(Type $type, array $queue = []): self
+    public static function make(Type $type): self
     {
         return new self(
             id: $type->typeID,
             name: $type->typeName,
-            level: $queue['finished_level'] ?? 0,
-            rank: $type->attributes->firstWhere('attributeID', 275)->valueFloat,
+            rank: $type->attributes->firstWhere('attributeID', 275)?->valueFloat,
             category: $type->group->groupName,
-            primaryAttribute: $type->attributes->firstWhere('attributeID', 180)->value?->attributeName,
-            secondaryAttribute: $type->attributes->firstWhere('attributeID', 181)->value?->attributeName,
-            startDate: $queue['start_date'] ? Carbon::parse($queue['start_date']) : null,
-            finishDate: $queue['finish_date'] ? Carbon::parse($queue['finish_date']) : null,
-            startSkillPoints: $queue['level_start_sp'] ?? 0,
-            finishSkillPoints: $queue['level_end_sp'] ?? 0,
+            primaryAttribute: $type->attributes->firstWhere('attributeID', 180)?->value?->attributeName,
+            secondaryAttribute: $type->attributes->firstWhere('attributeID', 181)?->value?->attributeName,
         );
     }
 
-    public function level(): string
+    public function skillPoints(int $atLevel): int
     {
-        return match ($this->level) {
-            1 => '&square;',
-            2 => '&square;&square;',
-            3 => '&square;&square;&square;',
-            4 => '&square;&square;&square;&square;',
-            5 => '&square;&square;&square;&square;&square;',
-            default => '0',
-        };
+        if ($atLevel === 0 || $this->rank === 0.0) {
+            return 0;
+        }
+
+        $sp = pow(2, 2.5 * $atLevel - 2.5) * 250.0 * $this->rank;
+
+        return (int) ceil($sp);
     }
 
-    public function finishesIn(): string
+    public function level(int $withSkillPoints): int
     {
-        return $this->startDate?->diffForHumans(
-            $this->finishDate,
-            [
-                'short' => true,
-                'syntax' => CarbonInterface::DIFF_ABSOLUTE,
-                'parts' => 3,
-                'join' => true,
-                'skip' => ['month', 'weeks',]
-            ]
-        ) ?? 'Unknown';
-    }
+        if ($withSkillPoints === 0 || $this->rank === 0.0) {
+            return 0;
+        }
 
-    public function trainingTime(Attributes $attributes): float
-    {
-        return (float)(($this->finishSkillPoints - $this->startSkillPoints) /
-            $this->skillPointsPerSecond($attributes));
+        $level = (log($withSkillPoints / (250.0 * $this->rank)) / log(2.0) + 2.5) / 2.5;
+
+        return (int) floor($level);
     }
 
     public function skillPointsPerSecond(Attributes $attributes): float
     {
-        return ($attributes[$this->primaryAttribute] + $attributes[$this->secondaryAttribute] / 2) / 60;
-    }
+        $primary = $attributes[$this->primaryAttribute];
+        $secondary = $attributes[$this->secondaryAttribute];
 
-    public function skillPointsAtLevel(int $level): int
-    {
-        if ($level === 0 || $this->rank === 0.0) {
-            return 0;
-        }
-
-        $sp = pow(2, 2.5 * $level - 2.5) * 250.0 * $this->rank;
-
-        return (int)round($sp);
+        return ($primary + $secondary / 2.0) / 60.0;
     }
 
     #[\Override]
@@ -106,15 +68,10 @@ final class Skill implements Wireable
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'level' => $this->level,
             'rank' => $this->rank,
             'category' => $this->category,
             'primaryAttribute' => $this->primaryAttribute,
             'secondaryAttribute' => $this->secondaryAttribute,
-            'startDate' => $this->startDate?->toDateTimeString(),
-            'finishDate' => $this->finishDate?->toDateTimeString(),
-            'startSkillPoints' => $this->startSkillPoints,
-            'finishSkillPoints' => $this->finishSkillPoints,
         ];
     }
 
@@ -124,15 +81,10 @@ final class Skill implements Wireable
         return new self(
             id: $value['id'],
             name: $value['name'],
-            level: $value['level'],
             rank: $value['rank'],
             category: $value['category'],
             primaryAttribute: $value['primaryAttribute'],
             secondaryAttribute: $value['secondaryAttribute'],
-            startDate: $value['startDate'] ? Carbon::parse($value['startDate']) : null,
-            finishDate: $value['finishDate'] ? Carbon::parse($value['finishDate']) : null,
-            startSkillPoints: $value['startSkillPoints'],
-            finishSkillPoints: $value['finishSkillPoints'],
         );
     }
 }
