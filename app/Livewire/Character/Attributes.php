@@ -4,64 +4,103 @@ namespace App\Livewire\Character;
 
 use App\ESI\Attributes as CharacterAttributes;
 use App\ESI\Character;
-use App\ESI\Http\Middleware;
-use App\ESI\Skill;
-use App\Models\Type;
-use Illuminate\Support\Arr;
+use App\ESI\Implant;
+use App\ESI\SkillQueueItem;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Attributes extends Component
 {
     public CharacterAttributes $characterAttributes;
 
+    /**
+     * @var Collection<int, SkillQueueItem>
+     */
+    #[Locked]
+    public Collection $skillQueue;
+
+    /**
+     * @var Collection<int, Implant>
+     */
+    #[Locked]
+    public Collection $implants;
+
     public array $optimal = [];
 
     public array $difference = [];
 
-    public function mount(Character $character)
+    public function mount(Character $character, Collection $skillQueue)
     {
         $this->characterAttributes = $character->attributes;
+        $this->skillQueue = $skillQueue;
+        $this->implants = $character->implants;
     }
 
     public function optimize()
     {
-        $response = Http::baseUrl('https://esi.evetech.net/latest/')
-            ->withHeaders([
-                'User-Agent' => 'Eve-Online-CLI-App',
-                'Authorization' => 'Bearer ' . auth()->user()->esi_token,
-            ])
-            ->withMiddleware(Middleware::refreshToken(auth()->user()->esi_token, auth()->user()->esi_refresh_token))
-            ->get('characters/' . auth()->user()->character_id . '/skillqueue');
+//        var skillPoints: [Key: Int] = [:]
+//            for item in trainingQueue.queue {
+//                let sp = item.finishSP - item.startSP
+//                let key = Key(primary: item.skill.primaryAttributeID, secondary: item.skill.secondaryAttributeID)
+//                skillPoints[key, default: 0] += sp
+//            }
+//
+//            let basePoints = 17
+//            let bonusPoints = 14
+//            let maxPoints = 27
+//            let totalMaxPoints = basePoints * 5 + bonusPoints
+//            var minTrainingTime = TimeInterval.greatestFiniteMagnitude
+//
+//            var optimal = Pilot.Attributes.default
+//
+//            for intelligence in basePoints...maxPoints {
+//        for memory in basePoints...maxPoints {
+//            for perception in basePoints...maxPoints {
+//                guard intelligence + memory + perception < totalMaxPoints - basePoints * 2 else {break}
+//                        for willpower in basePoints...maxPoints {
+//                    guard intelligence + memory + perception + willpower < totalMaxPoints - basePoints else {break}
+//                            let charisma = totalMaxPoints - (intelligence + memory + perception + willpower)
+//                            guard charisma <= maxPoints else {continue}
+//
+//                            let attributes = Pilot.Attributes(intelligence: intelligence, memory: memory, perception: perception, willpower: willpower, charisma: charisma)
+//
+//                            let trainingTime = skillPoints.reduce(0) { (t, i) -> TimeInterval in
+//                                let primary = attributes[i.key.primary]
+//                                let secondary = attributes[i.key.secondary]
+//                                return t + TimeInterval(i.value) / (TimeInterval(primary) + TimeInterval(secondary) / 2)
+//                            }
+//
+//                            if trainingTime < minTrainingTime {
+//                                minTrainingTime = trainingTime
+//                                optimal = attributes
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
+        $skillPoints = [];
 
-        $skillQueue = Type::with(['group', 'attributes',])
-            ->whereIn('typeID', Arr::pluck($response->json(), 'skill_id'))
-            ->get()
-            ->keyBy('typeID')
-            ->toBase()
-            ->sortBy(fn(Type $type) => array_search($type->typeID, Arr::pluck($response->json(), 'skill_id')))
-            ->zipByKey(collect($response->json())->keyBy('skill_id'))
-            /** @phpstan-var array{0: Type, 1: array} $type */
-            ->map(fn(array $skillQueue) => Skill::make($skillQueue[0], $skillQueue[1]));
+        foreach ($this->skillQueue as $skillQueueItem) {
+            if (!array_key_exists(
+                $skillQueueItem->skill->primaryAttribute . '|' . $skillQueueItem->skill->secondaryAttribute,
+                $skillPoints
+            )) {
+                $skillPoints[$skillQueueItem->skill->primaryAttribute . '|' . $skillQueueItem->skill->secondaryAttribute] = 0;
+            }
 
-        /** @var array<string, int> $skillPointsByAttributes */
-        $skillPointsByAttributes = $skillQueue->groupBy(
-            fn(Skill $skill) => $skill->primaryAttribute . '|' . $skill->secondaryAttribute
-        )->pipe(
-            fn(Collection $attributeGroup) => $attributeGroup->map(fn(Collection $skills) => $skills->sum(
-                fn(Skill $skill) => $skill->finishSkillPoints - $skill->startSkillPoints
-            ))
-        )->all();
+            $skillPoints[$skillQueueItem->skill->primaryAttribute . '|' . $skillQueueItem->skill->secondaryAttribute] += $skillQueueItem->finishSp - $skillQueueItem->startSp;
+        }
 
-        // TODO: Move this to an object
+        // TODO: Move this to the Attributes class... the non-Livewire one
         $basePoints = 17;
         $bonusPoints = 14;
         $maxPoints = 27;
         $totalMaxPoints = $basePoints * 5 + $bonusPoints;
         $minTrainingTime = PHP_FLOAT_MAX;
+
         $optimal = [
             'Charisma' => 0,
             'Intelligence' => 0,
@@ -97,13 +136,14 @@ class Attributes extends Component
                         ];
 
                         $trainingTime = array_reduce(
-                            array_keys($skillPointsByAttributes),
-                            function ($t, $key) use ($attributes, $skillPointsByAttributes) {
+                            array_keys($skillPoints),
+                            function ($t, $key) use ($attributes, $skillPoints) {
                                 [$primaryKey, $secondaryKey] = explode('|', $key);
 
                                 $primary = $attributes[$primaryKey];
                                 $secondary = $attributes[$secondaryKey];
-                                return $t + $skillPointsByAttributes[$key] / ($primary + $secondary / 2);
+
+                                return $t + $skillPoints[$key] / ($primary + $secondary / 2);
                             },
                             0
                         );
@@ -119,9 +159,11 @@ class Attributes extends Component
 
         $attributes = [];
 
-        foreach ($this->characterAttributes->values() as $key => $value ) {
+        foreach ($this->characterAttributes->values() as $key => $value) {
             $attributes[ucfirst($key->value)] = $value;
         }
+
+        $optimal = $this->adjustOptimalBasedOnCharacter($this->implants, $optimal);
 
         $this->optimal = $optimal;
 
@@ -130,6 +172,9 @@ class Attributes extends Component
         foreach ($optimal as $key => $value) {
             $this->difference[$key] = $value - $attributes[$key];
         }
+
+        $this->dispatch(event: 'character.attributes.optimized', attributes: $optimal)
+            ->to(SkillQueue::class);
 
         return $this;
     }
@@ -141,5 +186,28 @@ class Attributes extends Component
             'optimal' => $this->optimal,
             'difference' => $this->difference,
         ]);
+    }
+
+    /**
+     * @param Collection<int, Implant> $implants
+     * @param array<string, int> $optimal
+     *
+     * @return array<string, int>
+     */
+    private function adjustOptimalBasedOnCharacter(Collection $implants, array $optimal): array
+    {
+        $implantBoosts = $implants
+            ->filter(fn(Implant $implant): bool => $implant->value > 0)
+            ->mapWithKeys(fn(Implant $implant): array => [
+                $implant->attribute => $implant->value,
+            ])->all();
+
+        $optimal['Intelligence'] += $implantBoosts['Intelligence'] ?? 0;
+        $optimal['Memory'] += $implantBoosts['Memory'] ?? 0;
+        $optimal['Charisma'] += $implantBoosts['Charisma'] ?? 0;
+        $optimal['Perception'] += $implantBoosts['Perception'] ?? 0;
+        $optimal['Willpower'] += $implantBoosts['Willpower'] ?? 0;
+
+        return $optimal;
     }
 }

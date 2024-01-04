@@ -12,7 +12,6 @@ use App\Models\User;
 use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
 use Carbon\CarbonInterval;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
@@ -24,21 +23,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        CarbonInterval::enableFloatSetters();
+
         if (!$this->app->environment('production')) {
             $this->app->register(IdeHelperServiceProvider::class);
         }
 
-        Collection::macro('zipByKey', function (Collection $collection): Collection {
-            return $this->mapWithKeys(function ($item, $key) use ($collection) {
-                return [$key => [$item, $collection->get($key)]];
-            });
+        Collection::macro('queueTimeInterval', function (Attributes $attributes): CarbonInterval {
+            return CarbonInterval::seconds(
+                $this->map(fn(SkillQueueItem $skillQueueItem): CarbonInterval => $skillQueueItem->trainingTime($attributes))
+                    ->sum(fn(CarbonInterval $interval): float => $interval->totalSeconds)
+            )->cascade();
         });
 
         Collection::macro('queueTime', function (Attributes $attributes): string {
-            return CarbonInterval::seconds(
-                    $this->map(fn(SkillQueueItem $skillQueueItem): CarbonInterval => $skillQueueItem->trainingTime($attributes))
-                        ->sum(fn(CarbonInterval $interval): float => $interval->totalSeconds)
-            )->cascade()->forHumans(
+            return $this->queueTimeInterval($attributes)->forHumans(
                 ['short' => false, 'parts' => 3, 'join' => true, 'skip' => ['year', 'month', 'weeks',]]
             );
         });
@@ -50,45 +49,6 @@ class AppServiceProvider extends ServiceProvider
             ]
         )->baseUrl('https://esi.evetech.net/latest/')
             ->withMiddleware(Middleware::refreshToken($token, $refreshToken)));
-
-        Http::macro('skillQueue', function (User $user): Collection {
-            $skillQueue = Http::esi($user->esi_token)->get(
-                'characters/' . $user->character_id . '/skillqueue'
-            )->throw()->json();
-
-            /** @var Collection<string, Skill> $skills */
-            return Type::with(['group', 'attributes',])
-                ->whereIn('typeID', Arr::pluck($skillQueue, 'skill_id'))
-                ->get()
-                ->keyBy('typeID')
-                ->toBase()
-                ->sortBy(fn(Type $type) => array_search($type->typeID, Arr::pluck($skillQueue, 'skill_id')))
-                ->zipByKey(collect($skillQueue)->keyBy('skill_id'))
-                /** @psalm-var array{0: Type, 1: array} $type */
-                ->map(fn(array $skillQueue) => Skill::make($skillQueue[0], $skillQueue[1]));
-        });
-
-        /** @return Collection<int, Implant> */
-        Http::macro('implants', function (User $user): Collection {
-            return Type::with(['group', 'attributes',])
-                ->whereIn(
-                    'typeID',
-                    Http::esi($user->esi_token)->get(
-                        'characters/' . $user->character_id . '/implants'
-                    )->throw()->json()
-                )
-                ->get()
-                ->map(fn(Type $type) => Implant::make($type));
-        });
-
-        /** @return Collection<string, int> */
-        Http::macro('attributes', function (User $user): Collection {
-            return collect(
-                Http::esi($user->esi_token)->get(
-                    'https://esi.evetech.net/latest/characters/' . $user->character_id . '/attributes'
-                )->throw()->json()
-            )->only(['intelligence', 'memory', 'charisma', 'perception', 'willpower']);
-        });
     }
 
     /**
