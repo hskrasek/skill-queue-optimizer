@@ -10,7 +10,7 @@
                 <p class="text-base font-semibold leading-7 text-eve-accent">Eve Online</p>
                 <h1 class="mt-2 text-3xl font-bold tracking-tight text-eve-dark sm:text-4xl">{{ $character->name }}</h1>
 
-                <x-character :character="$character"/>
+                <x-character :character="$character" :skill-queue="$skillQueue"/>
                 <div class="border-b border-gray-200 pb-5 sm:pb-0">
                     <div class="mt-3 sm:mt-4">
                         <!-- Dropdown menu on small screens -->

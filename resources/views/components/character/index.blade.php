@@ -1,4 +1,4 @@
-@props(['character'])
+@props(['character', 'skillQueue'])
 @php
     /** @var \App\ESI\Character $character */
 @endphp
@@ -13,7 +13,7 @@
                  alt="Player portrait for the Eve Online character {{ $character->name }}"
                  width="150" height="150" class="rounded-full h-auto max-w-full align-middle">
         </div>
-        <livewire:character.attributes :character="$character" />
+        <livewire:character.attributes :character="$character" :skill-queue="$skillQueue" />
 
         <x-character.details :character="$character" />
 

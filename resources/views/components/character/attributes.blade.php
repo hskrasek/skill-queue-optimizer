@@ -37,7 +37,7 @@
                                     {{ $optimal[ucfirst($attribute->value)] ?? '??' }}
                                     <span
                                         @class([
-                                            "hidden text-xs text-gray-400" => !isset($difference[ucfirst($attribute->value)]),
+                                            "hidden" => !isset($difference[ucfirst($attribute->value)]),
                                             "text-xs text-gray-400" => isset($difference[ucfirst($attribute->value)]),
                                             "text-green-500" => isset($difference[ucfirst($attribute->value)]) && $difference[ucfirst($attribute->value)] >= 0,
                                             "text-red-500" => isset($difference[ucfirst($attribute->value)]) && $difference[ucfirst($attribute->value)] < 0,
