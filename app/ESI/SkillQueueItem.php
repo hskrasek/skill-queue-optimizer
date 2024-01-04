@@ -18,12 +18,13 @@ final readonly class SkillQueueItem implements Wireable
         public Skill $skill,
         public QueuedSkill $queuedSkill,
     ) {
+        $this->finishSp = $this->queuedSkill->levelEndSp ?? $this->skill->skillPoints(
+            $this->queuedSkill->finishedLevel
+        );
         $this->startSp = min(
             $this->queuedSkill->trainingStartSp,
-            $this->skill->skillPoints($this->queuedSkill->finishedLevel - 1),
-            $this->queuedSkill->levelEndSp
+            $this->finishSp
         );
-        $this->finishSp = $this->skill->skillPoints($this->queuedSkill->finishedLevel);
     }
 
     public function skillPoints(): int
@@ -87,7 +88,7 @@ final readonly class SkillQueueItem implements Wireable
     public function trainingTime(Attributes $attributes): CarbonInterval
     {
         return CarbonInterval::seconds(
-            ($this->finishSp - $this->startSp) / $this->skill->skillPointsPerSecond($attributes)
+            (float)($this->finishSp - $this->startSp) / $this->skill->skillPointsPerSecond($attributes)
         );
     }
 
@@ -95,7 +96,8 @@ final readonly class SkillQueueItem implements Wireable
     {
         $date = Carbon::now();
 
-        return $this->queuedSkill->finishDate !== null
+        return $this->queuedSkill->startDate !== null
+            && $this->queuedSkill->finishDate !== null
             && $this->queuedSkill->finishDate > $date
             && $this->queuedSkill->startDate < $date;
     }

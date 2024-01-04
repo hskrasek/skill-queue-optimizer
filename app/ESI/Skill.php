@@ -54,12 +54,17 @@ final class Skill implements Wireable
         return (int) floor($level);
     }
 
-    public function skillPointsPerSecond(Attributes $attributes): float
+    public function skillPointsPerMinute(Attributes $attributes): float
     {
         $primary = $attributes[$this->primaryAttribute];
         $secondary = $attributes[$this->secondaryAttribute];
 
-        return ($primary + $secondary / 2.0) / 60.0;
+        return ($primary + $secondary / 2.0);
+    }
+
+    public function skillPointsPerSecond(Attributes $attributes): float
+    {
+        return $this->skillPointsPerMinute($attributes) / 60.0;
     }
 
     #[\Override]

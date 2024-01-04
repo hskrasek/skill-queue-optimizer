@@ -16,8 +16,8 @@ final readonly class QueuedSkill implements Wireable
         public int $trainingStartSp,
         public int $levelStartSp,
         public int $levelEndSp,
-        public DateTimeImmutable $startDate,
-        public DateTimeImmutable $finishDate,
+        public ?DateTimeImmutable $startDate = null,
+        public ?DateTimeImmutable $finishDate = null,
     ) {
     }
 
@@ -43,8 +43,8 @@ final readonly class QueuedSkill implements Wireable
             'trainingStartSp' => $this->trainingStartSp,
             'levelStartSp' => $this->levelStartSp,
             'levelEndSp' => $this->levelEndSp,
-            'startDate' => $this->startDate->format('Y-m-d H:i:s'),
-            'finishDate' => $this->finishDate->format('Y-m-d H:i:s'),
+            'startDate' => $this->startDate?->format('Y-m-d H:i:s'),
+            'finishDate' => $this->finishDate?->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -61,8 +61,8 @@ final readonly class QueuedSkill implements Wireable
             trainingStartSp: $value['trainingStartSp'],
             levelStartSp: $value['levelStartSp'],
             levelEndSp: $value['levelEndSp'],
-            startDate: new DateTimeImmutable($value['startDate']),
-            finishDate: new DateTimeImmutable($value['finishDate']),
+            startDate: isset($value['startDate']) ? new DateTimeImmutable($value['startDate']) : null,
+            finishDate: isset($value['finishDate']) ? new DateTimeImmutable($value['finishDate']) : null,
         );
     }
 }

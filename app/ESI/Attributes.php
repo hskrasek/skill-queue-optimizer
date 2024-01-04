@@ -16,7 +16,7 @@ final readonly class Attributes implements \ArrayAccess, Wireable
      */
     private \WeakMap $attributes;
 
-    private function __construct(
+    public function __construct(
         array $attributes,
         public ?CarbonInterface $cooldownDate = null,
         public ?CarbonInterface $lastRemapDate = null,
@@ -61,10 +61,10 @@ final readonly class Attributes implements \ArrayAccess, Wireable
         }
 
         return $attributes + [
-            'cooldownDate' => $this->cooldownDate,
-            'lastRemapDate' => $this->lastRemapDate,
-            'bonusRemaps' => $this->bonusRemaps,
-        ];
+                'cooldownDate' => $this->cooldownDate,
+                'lastRemapDate' => $this->lastRemapDate,
+                'bonusRemaps' => $this->bonusRemaps,
+            ];
     }
 
     #[\Override]
