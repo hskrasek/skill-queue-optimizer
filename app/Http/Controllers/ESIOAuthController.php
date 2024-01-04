@@ -44,4 +44,13 @@ class ESIOAuthController extends Controller
 
         return redirect('/app');
     }
+
+    public function logout()
+    {
+        Auth::logout();
+
+        session()->invalidate();
+
+        return redirect('/');
+    }
 }

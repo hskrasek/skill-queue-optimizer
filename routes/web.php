@@ -29,3 +29,7 @@ Route::get('/app')
     ->name('app')
     ->middleware('auth')
     ->uses([App\Http\Controllers\AppController::class, 'index']);
+
+Route::any('/logout')
+    ->name('logout')
+    ->uses([App\Http\Controllers\ESIOAuthController::class, 'logout']);
