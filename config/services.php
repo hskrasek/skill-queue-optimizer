@@ -40,6 +40,7 @@ return [
             'esi-clones.read_implants.v1',
             'esi-skills.read_skills.v1',
             'esi-skills.read_skillqueue.v1',
+            'esi-planets.manage_planets.v1',
             'esi-characterstats.read.v1',
         ]),
     ],

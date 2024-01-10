@@ -2,7 +2,7 @@
     /** @var \App\ESI\Character $character */
     /** @var \Illuminate\Support\Collection<int, \App\ESI\SkillQueueItem> $skillQueue */
 @endphp
-<div id="skillQueue" class="mt-4">
+<div id="skillQueue" class="mt-4 hidden">
     <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
             <p class="mt-2 text-base font-semibold leading-6 text-gray-900">

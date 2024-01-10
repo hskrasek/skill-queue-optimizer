@@ -30,15 +30,16 @@
                                 <a href="#skillQueue"
                                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
                                    aria-current="page">Skill Queue</a>
-                                <a href="#"
-                                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Coming</a>
+                                <a href="#planetIndustry"
+                                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Planetary Industry</a>
                                 <a href="#"
                                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Soon...</a>
                             </nav>
                         </div>
                     </div>
                 </div>
-                <livewire:character.skill-queue :character="$character" :skill-queue="$skillQueue"/>
+                <livewire:character.skill-queue :character="$character" :skill-queue="$skillQueue" />
+                <livewire:planetary-industry />
             </div>
         </div>
     </div>
