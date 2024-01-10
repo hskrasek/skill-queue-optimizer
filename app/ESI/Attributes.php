@@ -46,8 +46,10 @@ final readonly class Attributes implements \ArrayAccess, Wireable
      */
     public function values(): \Generator
     {
-        foreach ($this->attributes as $attribute => $value) {
-            yield $attribute => $value;
+        foreach (Attribute::values() as $attribute) {
+            $attribute = Attribute::from($attribute);
+
+            yield $attribute => $this->attributes[$attribute];
         }
     }
 
