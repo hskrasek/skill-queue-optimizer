@@ -6,6 +6,8 @@ namespace App\ESI;
 
 use DateTimeImmutable;
 use Livewire\Wireable;
+use SVG\Nodes\Shapes\SVGRect;
+use SVG\SVG;
 
 final readonly class QueuedSkill implements Wireable
 {
@@ -31,6 +33,39 @@ final readonly class QueuedSkill implements Wireable
             5 => 'V',
             default => '',
         };
+    }
+
+    public function levelProgress(): SVG
+    {
+        return with(new SVG(10.75 * 5, 10), function (SVG $svg): SVG {
+            $doc = $svg->getDocument();
+            $doc->setStyle('border', '1px solid #000000');
+            $trainedLevels = $this->finishedLevel - 1;
+
+            for ($i = 0; $i < $trainedLevels; $i++) {
+                $doc->addChild(
+                    (new SVGRect($i * 10.5, 0, 10, 10))
+                        ->setStyle('fill', '#d8d8d8')
+                        ->setStyle('stroke', '#000000')
+                        ->setAttribute('stoke-width', 0.5)
+                        ->setAttribute('stoke-opacity', 0.8)
+                );
+            }
+
+            // Need to determine if future levels are in the queue
+            // If so, we need to show the progress of the current level training + the future levels
+            for ($i = $trainedLevels; $i < $this->finishedLevel; $i++) {
+                $doc->addChild(
+                    (new SVGRect($i * 10.5, 0, 10, 10))
+                        ->setStyle('fill', '#2FEFEF')
+//                        ->setStyle('stroke', '#000000')
+                        ->setAttribute('stoke-width', 0.5)
+                        ->setAttribute('stoke-opacity', 0.8)
+                );
+            }
+
+            return $svg;
+        });
     }
 
     #[\Override]

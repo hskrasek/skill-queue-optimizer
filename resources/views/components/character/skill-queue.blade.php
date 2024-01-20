@@ -37,6 +37,9 @@
                 <tr>
                     <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-0">
                         {{ $skillQueueItem->skill->name }} {{ $skillQueueItem->queuedSkill->finishedLevel() }}
+{{--                        <div>--}}
+{{--                            {!! $skillQueueItem->queuedSkill->levelProgress()->toXMLString(false) !!}--}}
+{{--                        </div>--}}
                         <div class="mt-1 truncate font-normal text-gray-500">{{ $skillQueueItem->skill->category }}</div>
                         <dl class="font-normal lg:hidden">
                             <dt class="sr-only sm:hidden">Training Time</dt>
